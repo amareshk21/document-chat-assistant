@@ -77,8 +77,8 @@ def reload_documents() -> Dict[str, Any]:
         data_dir = Path("data")
         
         if not data_dir.exists():
-            print("Data directory not found!")
-            return {"status": "error", "message": "Data directory not found"}
+            print("Data directory not found - creating empty collection")
+            return {"status": "success", "message": "No documents found - created empty collection"}
             
         # Process each text file
         for file_path in data_dir.glob("**/*.txt"):
@@ -104,7 +104,7 @@ def reload_documents() -> Dict[str, Any]:
             return {"status": "success", "message": f"Loaded {len(documents)} documents"}
         else:
             print("No documents found to load!")
-            return {"status": "success", "message": "No documents found"}
+            return {"status": "success", "message": "No documents found - created empty collection"}
             
     except Exception as e:
         print(f"Error reloading documents: {e}")

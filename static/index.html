@@ -3,55 +3,747 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document Chat Assistant</title>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/static/styles.css">
+    <title>Assistant for Everything you Dont know</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        /* Header Styles */
+        .header {
+            background: linear-gradient(135deg, #1a237e, #0d47a1);
+            color: white;
+            padding: 1.5rem;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        /* Tab Navigation */
+        .tab-nav {
+            background: white;
+            padding: 1rem;
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .tab-btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            background: none;
+            font-size: 1rem;
+            color: #666;
+            cursor: pointer;
+            border-radius: 25px;
+            transition: all 0.3s ease;
+        }
+
+        .tab-btn.active {
+            background: #1a237e;
+            color: white;
+        }
+
+        .tab-btn:hover:not(.active) {
+            background: #f0f0f0;
+        }
+
+        /* Main Container */
+        .main-container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        /* Chat Tab Content */
+        .chat-container {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+            height: calc(100vh - 250px);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .system-prompt {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-bottom: 1px solid #eee;
+        }
+
+        .system-prompt h3 {
+            color: #1a237e;
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .system-prompt textarea {
+            width: 100%;
+            min-height: 100px;
+            padding: 0.75rem;
+            border: 2px solid #eee;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 0.9rem;
+            resize: vertical;
+            margin: 0.5rem 0;
+        }
+
+        .system-prompt textarea:focus {
+            outline: none;
+            border-color: #1a237e;
+        }
+
+        .prompt-variables {
+            background: #e3f2fd;
+            padding: 0.75rem;
+            border-radius: 5px;
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .prompt-variables p {
+            color: #1a237e;
+            font-weight: 500;
+            margin: 0;
+        }
+
+        .chat-messages {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .message {
+            max-width: 80%;
+            margin-bottom: 1rem;
+            padding: 1rem;
+            border-radius: 10px;
+            position: relative;
+        }
+
+        .user-message {
+            background: #1a237e;
+            color: white;
+            margin-left: auto;
+        }
+
+        .assistant-message {
+            background: #f5f5f5;
+            color: #333;
+            margin-right: auto;
+        }
+
+        .message-content {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .response-scores {
+            margin-top: 0.5rem;
+            font-size: 0.9em;
+            color: #28a745;
+            font-weight: 500;
+        }
+
+        .response-scores span {
+            margin-right: 1rem;
+        }
+
+        /* Context Display in Chat */
+        .context-section {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 1rem;
+            margin: 1rem 0;
+            border: 1px solid #eee;
+        }
+
+        .context-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 5px;
+            transition: background-color 0.2s;
+        }
+
+        .context-header:hover {
+            background-color: #e9ecef;
+        }
+
+        .context-header h3 {
+            color: #1a237e;
+            font-size: 1rem;
+            margin: 0;
+        }
+
+        .context-toggle {
+            color: #1a237e;
+            font-size: 1.2rem;
+            transition: transform 0.3s ease;
+        }
+
+        .context-toggle.collapsed {
+            transform: rotate(-90deg);
+        }
+
+        .context-content {
+            max-height: 500px;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+
+        .context-content.collapsed {
+            max-height: 0;
+        }
+
+        .context-chunk {
+            background: white;
+            padding: 0.75rem;
+            border-radius: 5px;
+            margin-bottom: 0.5rem;
+            border: 1px solid #eee;
+            font-size: 0.9rem;
+        }
+
+        .context-chunk:last-child {
+            margin-bottom: 0;
+        }
+
+        .context-chunk-content {
+            margin-bottom: 0.25rem;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .relevance-score {
+            font-size: 0.8em;
+            color: #28a745;
+            font-weight: 500;
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            background: #e8f5e9;
+            border-radius: 3px;
+        }
+
+        /* Input Area */
+        .input-area {
+            padding: 1rem;
+            background: white;
+            border-top: 1px solid #eee;
+            display: flex;
+            gap: 1rem;
+        }
+
+        .input-area input {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            border: 2px solid #eee;
+            border-radius: 25px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        .input-area input:focus {
+            outline: none;
+            border-color: #1a237e;
+        }
+
+        .input-area button {
+            padding: 0.75rem 1.5rem;
+            background: #1a237e;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background-color 0.3s;
+        }
+
+        .input-area button:hover {
+            background: #0d47a1;
+        }
+
+        /* Tools Tab Content */
+        .tools-container {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 2rem;
+        }
+
+        .tools-section {
+            margin-bottom: 2rem;
+        }
+
+        .tools-section h2 {
+            color: #1a237e;
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+        }
+
+        .tools-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .tool-card {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .tool-card h3 {
+            color: #1a237e;
+            margin-bottom: 1rem;
+        }
+
+        .tool-card p {
+            color: #666;
+            margin-bottom: 1rem;
+        }
+
+        .tool-card button {
+            width: 100%;
+            padding: 0.75rem;
+            background: #1a237e;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .tool-card button:hover {
+            background: #0d47a1;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+
+        .modal-content {
+            position: relative;
+            background: white;
+            margin: 10% auto;
+            padding: 2rem;
+            width: 90%;
+            max-width: 500px;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+        }
+
+        .modal-content h2 {
+            color: #1a237e;
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #eee;
+            border-radius: 5px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #1a237e;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+            margin-top: 2rem;
+        }
+
+        .submit-btn,
+        .cancel-btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background-color 0.3s;
+        }
+
+        .submit-btn {
+            background: #1a237e;
+            color: white;
+        }
+
+        .submit-btn:hover {
+            background: #0d47a1;
+        }
+
+        .cancel-btn {
+            background: #6c757d;
+            color: white;
+        }
+
+        .cancel-btn:hover {
+            background: #5a6268;
+        }
+
+        /* Tab Content */
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+    </style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>Document Chat Assistant</h1>
-            <p class="subtitle">Ask questions about your documents</p>
-            <div class="controls">
-                <button id="cleanupBtn" class="control-btn">Clean Up Data</button>
-                <button id="scrapeBtn" class="control-btn">Scrape New URL</button>
-            </div>
-        </header>
+    <!-- Header -->
+    <header class="header">
+        <h1>Assistant for Everything</h1>
+        <p>Your AI-powered knowledge companion</p>
+    </header>
 
-        <!-- URL Input Modal -->
-        <div id="urlModal" class="modal">
-            <div class="modal-content">
-                <h2>Enter URL to Scrape</h2>
-                <form id="urlForm">
-                    <div class="form-group">
-                        <label for="urlInput">URL:</label>
-                        <input type="url" id="urlInput" required placeholder="https://example.com">
+    <!-- Tab Navigation -->
+    <nav class="tab-nav">
+        <button class="tab-btn active" onclick="switchTab('chat')">Chat</button>
+        <button class="tab-btn" onclick="switchTab('tools')">Tools</button>
+    </nav>
+
+    <!-- Main Container -->
+    <div class="main-container">
+        <!-- Chat Tab -->
+        <div id="chat-tab" class="tab-content active">
+            <div class="chat-container">
+                <!-- System Prompt Section -->
+                <div class="system-prompt">
+                    <h3>System Prompt</h3>
+                    <div class="prompt-variables">
+                        <p>Available variables: {user_query}, {context}</p>
                     </div>
-                    <div class="form-group">
-                        <label for="nameInput">Name (for folder):</label>
-                        <input type="text" id="nameInput" required placeholder="e.g., kcc_scheme">
-                    </div>
-                    <div class="modal-buttons">
-                        <button type="submit" class="submit-btn">Start Scraping</button>
-                        <button type="button" class="cancel-btn" id="close-modal">Cancel</button>
-                    </div>
-                </form>
+                    <textarea id="systemPromptInput">You are a helpful assistant that provides accurate information based on the given context. If the context doesn't contain enough information to answer the question, say so.
+
+User Query: {user_query}
+
+Context:
+{context}
+
+Please provide a helpful response based on the above information.</textarea>
+                </div>
+                <div class="chat-messages" id="chatContainer"></div>
+                <div class="input-area">
+                    <input type="text" id="userInput" placeholder="Ask me anything...">
+                    <button onclick="sendMessage()" id="sendButton">Send</button>
+                </div>
             </div>
         </div>
 
-        <div class="chat-container">
-            <div id="chat-box" class="chat-history">
-                <div class="welcome-message">
-                    <h2>Welcome to Document Chat Assistant</h2>
-                    <p>Ask any questions about your documents. I'll help you find the information you need.</p>
+        <!-- Tools Tab -->
+        <div id="tools-tab" class="tab-content">
+            <div class="tools-container">
+                <!-- Data Management Section -->
+                <div class="tools-section">
+                    <h2>Data Management Tools</h2>
+                    <div class="tools-grid">
+                        <div class="tool-card">
+                            <h3>Scrape New URL</h3>
+                            <p>Add new content to the knowledge base by scraping a webpage.</p>
+                            <button onclick="showUrlModal()" id="scrapeBtn">Scrape URL</button>
+                        </div>
+                        <div class="tool-card">
+                            <h3>Clean Up Data</h3>
+                            <p>Remove all data and start fresh with a clean knowledge base.</p>
+                            <button onclick="cleanupData()" id="cleanupBtn">Clean Up</button>
+                        </div>
+                    </div>
                 </div>
-            </div>
-            <div class="input-container">
-                <input type="text" id="userInput" placeholder="Type your question here...">
-                <button id="sendButton">Send</button>
             </div>
         </div>
     </div>
-    <script src="/static/script.js"></script>
+
+    <!-- URL Scraping Modal -->
+    <div id="urlModal" class="modal">
+        <div class="modal-content">
+            <h2>Scrape New URL</h2>
+            <form id="urlForm">
+                <div class="form-group">
+                    <label for="urlInput">URL:</label>
+                    <input type="url" id="urlInput" required placeholder="https://example.com">
+                </div>
+                <div class="form-group">
+                    <label for="nameInput">Name:</label>
+                    <input type="text" id="nameInput" required placeholder="Source name">
+                </div>
+                <div class="modal-buttons">
+                    <button type="button" onclick="hideModal()" class="cancel-btn">Cancel</button>
+                    <button type="submit" class="submit-btn">Scrape</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Tab switching functionality
+        function switchTab(tabName) {
+            // Update tab buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            // Update tab content
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById(`${tabName}-tab`).classList.add('active');
+        }
+
+        const chatContainer = document.getElementById('chatContainer');
+        const sendButton = document.getElementById('sendButton');
+        const userInput = document.getElementById('userInput');
+        const urlModal = document.getElementById('urlModal');
+        const urlForm = document.getElementById('urlForm');
+        const scrapeBtn = document.getElementById('scrapeBtn');
+        const cleanupBtn = document.getElementById('cleanupBtn');
+        const systemPromptInput = document.getElementById('systemPromptInput');
+
+        function showUrlModal() {
+            urlModal.style.display = 'block';
+        }
+
+        function hideModal() {
+            urlModal.style.display = 'none';
+            urlForm.reset();
+        }
+
+        // Close modal when clicking outside
+        window.addEventListener('click', function(e) {
+            if (e.target === urlModal) {
+                hideModal();
+            }
+        });
+
+        urlForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const url = document.getElementById('urlInput').value;
+            const name = document.getElementById('nameInput').value;
+
+            hideModal();
+            scrapeBtn.disabled = true;
+            scrapeBtn.textContent = 'Scraping...';
+            
+            try {
+                const response = await fetch('/scrape', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        url,
+                        name
+                    }),
+                });
+                
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    addMessage(`Data scraping completed successfully. ${data.message}`, false);
+                } else {
+                    addMessage(`Scraping failed: ${data.message}`, false);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                addMessage('Failed to scrape data. Please try again.', false);
+            } finally {
+                scrapeBtn.disabled = false;
+                scrapeBtn.textContent = 'Scrape URL';
+            }
+        });
+
+        async function cleanupData() {
+            cleanupBtn.disabled = true;
+            cleanupBtn.textContent = 'Cleaning...';
+            
+            try {
+                const response = await fetch('/cleanup', {
+                    method: 'POST',
+                });
+                
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    addMessage('Data cleanup completed successfully.', false);
+                } else {
+                    addMessage(`Cleanup failed: ${data.message}`, false);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                addMessage('Failed to clean up data. Please try again.', false);
+            } finally {
+                cleanupBtn.disabled = false;
+                cleanupBtn.textContent = 'Clean Up';
+            }
+        }
+
+        function addMessage(message, isUser, scores = null, context = null) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'user-message' : 'assistant-message'}`;
+            
+            // Convert markdown-style formatting
+            let formattedMessage = message
+                .replace(/\n/g, '<br>')  // Convert newlines to <br>
+                .replace(/`([^`]+)`/g, '<code>$1</code>')  // Convert code blocks
+                .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')  // Convert bold
+                .replace(/\*([^*]+)\*/g, '<em>$1</em>');  // Convert italic
+            
+            messageDiv.innerHTML = formattedMessage;
+
+            // Add context if available
+            if (!isUser && context && context.length > 0) {
+                const contextSection = document.createElement('div');
+                contextSection.className = 'context-section';
+                contextSection.innerHTML = `
+                    <div class="context-header">
+                        <h3>Relevant Context</h3>
+                        <span class="context-toggle collapsed">▼</span>
+                    </div>
+                    <div class="context-content collapsed">
+                        ${context.map(chunk => `
+                            <div class="context-chunk">
+                                <div class="context-chunk-content">${chunk.content}</div>
+                                <div class="relevance-score">Relevance: ${chunk.relevance_score}%</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+
+                // Add click handler for context toggle
+                const contextHeader = contextSection.querySelector('.context-header');
+                const contextContent = contextSection.querySelector('.context-content');
+                const contextToggle = contextSection.querySelector('.context-toggle');
+
+                contextHeader.addEventListener('click', () => {
+                    contextContent.classList.toggle('collapsed');
+                    contextToggle.classList.toggle('collapsed');
+                });
+
+                messageDiv.appendChild(contextSection);
+            }
+
+            // Add scores if available
+            if (!isUser && scores) {
+                const scoresDiv = document.createElement('div');
+                scoresDiv.className = 'response-scores';
+                scoresDiv.innerHTML = `
+                    <span>Relevancy: ${scores.relevancy}%</span>
+                    <span>Accuracy: ${scores.accuracy}%</span>
+                `;
+                messageDiv.appendChild(scoresDiv);
+            }
+
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        async function sendMessage() {
+            const message = userInput.value.trim();
+            if (!message) return;
+
+            // Disable input and button while processing
+            sendButton.disabled = true;
+            userInput.disabled = true;
+
+            // Add user message to chat
+            addMessage(message, true);
+
+            try {
+                const response = await fetch('/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ 
+                        message,
+                        system_prompt: systemPromptInput.value
+                    }),
+                });
+
+                const data = await response.json();
+
+                if (data.error) {
+                    addMessage(`Error: ${data.error}`, false);
+                } else {
+                    // Add assistant's response to chat with context and scores
+                    addMessage(data.response, false, {
+                        relevancy: data.relevancy_score || 0,
+                        accuracy: data.accuracy_score || 0
+                    }, data.context);
+                }
+            } catch (error) {
+                addMessage('Error: Failed to send message', false);
+                console.error('Error:', error);
+            } finally {
+                // Re-enable input and button
+                sendButton.disabled = false;
+                userInput.disabled = false;
+                userInput.value = '';
+                userInput.focus();
+            }
+        }
+
+        // Allow sending message with Enter key
+        userInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+    </script>
 </body>
 </html> 
