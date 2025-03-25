@@ -35,18 +35,27 @@ app.add_middleware(
 # Initialize OpenAI
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-# Initialize ChromaDB
-chroma_client = chromadb.Client()
+# Initialize ChromaDB with persistent storage
+chroma_client = chromadb.PersistentClient(path="./chroma_db")
 openai_ef = embedding_functions.OpenAIEmbeddingFunction(
     api_key=os.getenv("OPENAI_API_KEY"),
     model_name="text-embedding-ada-002"
 )
 
 # Create or get collection
-collection = chroma_client.create_collection(
-    name="my_documents",
-    embedding_function=openai_ef
-)
+try:
+    collection = chroma_client.get_collection(
+        name="my_documents",
+        embedding_function=openai_ef
+    )
+    print("Loaded existing collection")
+except Exception as e:
+    print(f"Creating new collection: {str(e)}")
+    collection = chroma_client.create_collection(
+        name="my_documents",
+        embedding_function=openai_ef
+    )
+    print("Created new collection")
 
 def load_documents_from_directory(directory: str) -> List[str]:
     """Load all text files from the specified directory."""
@@ -65,9 +74,14 @@ def reload_documents():
     """Reload documents into ChromaDB."""
     try:
         print("Starting document reload...")
-        # Delete existing collection
-        print("Deleting existing collection...")
-        chroma_client.delete_collection("my_documents")
+        
+        # Try to delete existing collection if it exists
+        try:
+            print("Attempting to delete existing collection...")
+            chroma_client.delete_collection("my_documents")
+            print("Successfully deleted existing collection")
+        except Exception as e:
+            print(f"No existing collection to delete: {str(e)}")
         
         # Create new collection
         print("Creating new collection...")
@@ -76,6 +90,7 @@ def reload_documents():
             name="my_documents",
             embedding_function=openai_ef
         )
+        print("Successfully created new collection")
         
         # Load documents
         print("Loading documents from data directory...")
@@ -276,6 +291,11 @@ async def cleanup_data():
             embedding_function=openai_ef
         )
         print("Created new empty collection")
+        
+        # Reload documents if they exist
+        reload_result = reload_documents()
+        if reload_result["status"] == "success":
+            print("Reloaded documents after cleanup")
         
         return {"status": "success", "message": "Cleaned up data and vector database"}
     except Exception as e:
