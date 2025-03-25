@@ -1,0 +1,23 @@
+{
+    "sources": [
+        {
+            "name": "kcc_scheme",
+            "url": "https://www.rbi.org.in/commonperson/English/Scripts/Notification.aspx?Id=1218",
+            "title": "Kisan Credit Card (KCC) Scheme",
+            "description": "Information about the Kisan Credit Card scheme for farmers",
+            "output_dir": "data/kcc"
+        },
+        {
+            "name": "pm_kisan",
+            "url": "https://pmkisan.gov.in/",
+            "title": "PM Kisan Scheme",
+            "description": "Information about the PM Kisan scheme",
+            "output_dir": "data/pm_kisan"
+        }
+    ],
+    "scraping": {
+        "max_retries": 3,
+        "timeout": 30,
+        "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+    }
+} 
